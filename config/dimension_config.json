@@ -1,0 +1,53 @@
+{
+  "date_range": {
+    "start_year": 2020,
+    "end_year": 2030
+  },
+  "group_fiscal_year": {
+    "name": "Group",
+    "start_month": 1,
+    "start_day": 1
+  },
+  "divisions": [
+    {
+      "code": "DIV1",
+      "name": "Division One",
+      "fiscal_year_start_month": 7,
+      "fiscal_year_start_day": 1
+    },
+    {
+      "code": "DIV2",
+      "name": "Division Two",
+      "fiscal_year_start_month": 4,
+      "fiscal_year_start_day": 1
+    },
+    {
+      "code": "DIV3",
+      "name": "Division Three",
+      "fiscal_year_start_month": 10,
+      "fiscal_year_start_day": 1
+    },
+    {
+      "code": "DIV4",
+      "name": "Division Four",
+      "fiscal_year_start_month": 7,
+      "fiscal_year_start_day": 1
+    },
+    {
+      "code": "DIV5",
+      "name": "Division Five",
+      "fiscal_year_start_month": 4,
+      "fiscal_year_start_day": 1
+    },
+    {
+      "code": "DIV6",
+      "name": "Division Six",
+      "fiscal_year_start_month": 1,
+      "fiscal_year_start_day": 1
+    }
+  ],
+  "holidays": {
+    "enabled": true,
+    "country": "US"
+  }
+}

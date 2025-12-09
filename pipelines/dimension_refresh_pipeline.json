@@ -1,0 +1,212 @@
+{
+  "name": "Dimension_Tables_Refresh",
+  "description": "Scheduled refresh of calendar dimension tables (Dim_Date and Dim_Time)",
+  "properties": {
+    "activities": [
+      {
+        "name": "Generate_Dim_Date",
+        "type": "SynapseNotebook",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "notebook": {
+            "referenceName": "Generate_Dim_Date",
+            "type": "NotebookReference"
+          },
+          "parameters": {},
+          "snapshot": true,
+          "sparkPool": {
+            "referenceName": "YourSparkPool",
+            "type": "BigDataPoolReference"
+          },
+          "executorSize": "Small",
+          "conf": {
+            "spark.dynamicAllocation.enabled": false,
+            "spark.dynamicAllocation.minExecutors": 2,
+            "spark.dynamicAllocation.maxExecutors": 2
+          },
+          "driverSize": "Small",
+          "numExecutors": 2
+        }
+      },
+      {
+        "name": "Generate_Dim_Time",
+        "type": "SynapseNotebook",
+        "dependsOn": [
+          {
+            "activity": "Generate_Dim_Date",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:30:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "notebook": {
+            "referenceName": "Generate_Dim_Time",
+            "type": "NotebookReference"
+          },
+          "parameters": {},
+          "snapshot": true,
+          "sparkPool": {
+            "referenceName": "YourSparkPool",
+            "type": "BigDataPoolReference"
+          },
+          "executorSize": "Small",
+          "conf": {
+            "spark.dynamicAllocation.enabled": false,
+            "spark.dynamicAllocation.minExecutors": 2,
+            "spark.dynamicAllocation.maxExecutors": 2
+          },
+          "driverSize": "Small",
+          "numExecutors": 2
+        }
+      },
+      {
+        "name": "Send_Success_Notification",
+        "type": "WebActivity",
+        "dependsOn": [
+          {
+            "activity": "Generate_Dim_Time",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:05:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "url": "https://your-notification-endpoint.com/webhook",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "message": "Dimension tables refresh completed successfully",
+            "pipeline": "@{pipeline().Pipeline}",
+            "runId": "@{pipeline().RunId}",
+            "timestamp": "@{utcnow()}"
+          }
+        }
+      },
+      {
+        "name": "Send_Failure_Notification",
+        "type": "WebActivity",
+        "dependsOn": [
+          {
+            "activity": "Generate_Dim_Date",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          },
+          {
+            "activity": "Generate_Dim_Time",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:05:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "url": "https://your-notification-endpoint.com/webhook",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "message": "Dimension tables refresh FAILED",
+            "pipeline": "@{pipeline().Pipeline}",
+            "runId": "@{pipeline().RunId}",
+            "timestamp": "@{utcnow()}",
+            "error": "@{activity('Generate_Dim_Date').error.message}"
+          }
+        }
+      }
+    ],
+    "parameters": {},
+    "variables": {},
+    "folder": {
+      "name": "Dimension_Management"
+    },
+    "annotations": [
+      "dimension",
+      "calendar",
+      "time",
+      "automated"
+    ]
+  },
+  "schedule": {
+    "comment": "Example schedule configurations (choose one):",
+    "monthly": {
+      "recurrence": {
+        "frequency": "Month",
+        "interval": 1,
+        "startTime": "2025-01-01T00:00:00Z",
+        "timeZone": "UTC",
+        "schedule": {
+          "monthDays": [1]
+        }
+      }
+    },
+    "quarterly": {
+      "recurrence": {
+        "frequency": "Month",
+        "interval": 3,
+        "startTime": "2025-01-01T00:00:00Z",
+        "timeZone": "UTC",
+        "schedule": {
+          "monthDays": [1]
+        }
+      }
+    },
+    "yearly": {
+      "recurrence": {
+        "frequency": "Year",
+        "interval": 1,
+        "startTime": "2025-01-01T00:00:00Z",
+        "timeZone": "UTC"
+      }
+    }
+  },
+  "documentation": {
+    "description": "This pipeline orchestrates the refresh of calendar dimension tables",
+    "steps": [
+      "1. Execute Generate_Dim_Date notebook to populate Dim_Date table",
+      "2. Execute Generate_Dim_Time notebook to populate Dim_Time table",
+      "3. Send notifications on success or failure"
+    ],
+    "configuration": [
+      "Update 'YourSparkPool' reference to your actual Spark pool name",
+      "Configure notification webhook URLs for success/failure alerts",
+      "Adjust executor sizes based on data volume and performance requirements",
+      "Set appropriate schedule based on your refresh requirements"
+    ]
+  }
+}
