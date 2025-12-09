@@ -14,7 +14,7 @@ This solution provides two core dimension tables designed for Microsoft Fabric W
 ✅ **Multi-Division Fiscal Year Support**: Configure unique fiscal year start dates for each division
 ✅ **Group Fiscal Year**: Overarching fiscal year for consolidated reporting
 ✅ **Enterprise Calendar Attributes**: ISO weeks, quarters, day classifications, and more
-✅ **US Federal Holidays**: Automatic holiday identification with IsHoliday flag
+✅ **UK Public Holidays**: Automatic bank holiday identification with IsHoliday flag
 ✅ **Self-Contained Notebooks**: All DDL and logic embedded in Fabric notebooks
 ✅ **Configurable Date Ranges**: JSON-based configuration for flexibility
 ✅ **Schedulable Pipeline**: Automated refresh via Fabric Data Pipeline
@@ -118,7 +118,7 @@ Microsoft Fabric Workspace
   ],
   "holidays": {
     "enabled": true,
-    "country": "US"
+    "country": "UK"
   }
 }
 ```
@@ -396,19 +396,17 @@ For large date ranges (20+ years):
 
 ### Holiday Detection
 
-Currently supports US Federal Holidays:
+Currently supports UK Public Holidays (Bank Holidays):
 - New Year's Day
-- Martin Luther King Jr. Day
-- Presidents Day
-- Memorial Day
-- Independence Day
-- Labor Day
-- Columbus Day
-- Veterans Day
-- Thanksgiving Day
+- Good Friday
+- Easter Monday
+- Early May Bank Holiday
+- Spring Bank Holiday (last Monday in May)
+- Summer Bank Holiday (last Monday in August)
 - Christmas Day
+- Boxing Day
 
-**To add custom holidays**: Modify the `get_us_holidays()` function in `Generate_Dim_Date.ipynb`
+**To add custom holidays**: Modify the `get_uk_holidays()` function in `Generate_Dim_Date.ipynb`
 
 ### Time Granularity
 
@@ -459,7 +457,7 @@ calendar/
 **v1.0.0** (2025-12-09)
 - Initial release
 - Multi-division fiscal year support
-- US Federal holidays
+- UK Public Holidays (Bank Holidays)
 - Self-contained Fabric notebooks
 - Configurable via JSON
 
