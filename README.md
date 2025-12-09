@@ -16,6 +16,7 @@ This solution provides two core dimension tables designed for Microsoft Fabric W
 ✅ **Enterprise Calendar Attributes**: ISO weeks, quarters, day classifications, and more
 ✅ **UK Public Holidays**: Automatic bank holiday identification with IsHoliday flag
 ✅ **Self-Contained Notebooks**: All DDL and logic embedded in Fabric notebooks
+✅ **Dynamic Configuration**: Automatic workspace and lakehouse ID detection using notebookutils
 ✅ **Configurable Date Ranges**: JSON-based configuration for flexibility
 ✅ **Schedulable Pipeline**: Automated refresh via Fabric Data Pipeline
 
@@ -142,27 +143,22 @@ Microsoft Fabric Workspace
    - Click **Add lakehouse** (left sidebar)
    - Select your Lakehouse containing the config file
 
-### Step 3: Configure Notebooks
+### Step 3: Verify Notebook Configuration
 
-Open each notebook and update the configuration cells:
+The notebooks automatically retrieve workspace and lakehouse IDs using `notebookutils`:
 
 **Generate_Dim_Date.ipynb** (Cell 2):
+- Workspace ID and Lakehouse ID are retrieved automatically from the attached lakehouse
+- No manual configuration required
+- The notebook will display the IDs and config path when executed
+
+**Generate_Dim_Time.ipynb** (Cell 2):
+- Configure time granularity if needed (default: "minute"):
 ```python
-workspace_name = "YourWorkspace"      # Your Fabric workspace name
-lakehouse_name = "YourLakehouse"      # Your lakehouse name
-warehouse_name = "YourWarehouse"      # Your warehouse name
+time_granularity = "minute"  # 'minute' or 'second'
 ```
 
-**Generate_Dim_Time.ipynb** (Cell 1):
-```python
-warehouse_name = "YourWarehouse"      # Your warehouse name
-time_granularity = "minute"           # 'minute' or 'second'
-```
-
-**Finding Your Names:**
-- Workspace name: Visible in Fabric workspace URL
-- Lakehouse name: Shown in the Lakehouse explorer
-- Warehouse name: Your target SQL analytics warehouse
+**Note:** As long as your lakehouse is attached to the notebooks, the workspace and lakehouse IDs are automatically detected. You don't need to hardcode any names or IDs.
 
 ### Step 4: Execute Notebooks
 
@@ -346,8 +342,8 @@ Error: Path does not exist: abfss://...
 ```
 **Solution**:
 - Verify config file uploaded to `Files/config/` in Lakehouse
-- Check workspace and lakehouse names in notebook configuration
-- Ensure Lakehouse is attached to notebook
+- Ensure Lakehouse is attached to notebook (workspace and lakehouse IDs are retrieved automatically)
+- Check that the lakehouse attachment is set as default
 
 **Issue**: Duplicate columns in Dim_Date
 ```
@@ -459,6 +455,7 @@ calendar/
 - Multi-division fiscal year support
 - UK Public Holidays (Bank Holidays)
 - Self-contained Fabric notebooks
+- Dynamic workspace and lakehouse ID detection using notebookutils
 - Configurable via JSON
 
 ---
