@@ -143,22 +143,35 @@ Microsoft Fabric Workspace
    - Click **Add lakehouse** (left sidebar)
    - Select your Lakehouse containing the config file
 
-### Step 3: Verify Notebook Configuration
+### Step 3: Configure Target Warehouse
 
-The notebooks automatically retrieve workspace and lakehouse IDs using `notebookutils`:
+Both notebooks need to know which Fabric Warehouse to target for table creation.
 
-**Generate_Dim_Date.ipynb** (Cell 2):
-- Workspace ID and Lakehouse ID are retrieved automatically from the attached lakehouse
-- No manual configuration required
-- The notebook will display the IDs and config path when executed
+**Important Configuration (both notebooks - Cell 2):**
+```python
+warehouse_name = "YourWarehouse"  # UPDATE THIS: Your Fabric Warehouse name
+```
 
-**Generate_Dim_Time.ipynb** (Cell 2):
-- Configure time granularity if needed (default: "minute"):
+**How it works:**
+- Workspace ID and Lakehouse ID are retrieved automatically using `notebookutils.runtime.context`
+  - `currentWorkspaceId`: Your Fabric workspace GUID
+  - `defaultLakehouseId`: The attached lakehouse GUID
+- Tables are created using three-part naming: `{warehouse_name}.dbo.TableName`
+- Example: `MyWarehouse.dbo.Dim_Date`
+
+**Additional Configuration:**
+
+**Generate_Dim_Time.ipynb** - Configure time granularity if needed (default: "minute"):
 ```python
 time_granularity = "minute"  # 'minute' or 'second'
 ```
 
-**Note:** As long as your lakehouse is attached to the notebooks, the workspace and lakehouse IDs are automatically detected. You don't need to hardcode any names or IDs.
+**Finding Your Warehouse Name:**
+- Navigate to your Fabric workspace
+- Look in the left navigation under "SQL analytics endpoint" or "Warehouses"
+- Use the exact name of your target warehouse
+
+**Note:** The notebooks automatically attach to the default lakehouse for config file access, but create tables in the specified warehouse using SQL commands.
 
 ### Step 4: Execute Notebooks
 
@@ -175,9 +188,27 @@ time_granularity = "minute"  # 'minute' or 'second'
 
 **Expected Output:**
 - ✓ Configuration loaded successfully
-- ✓ Tables created
+- ✓ Tables created in warehouse
 - ✓ Data quality checks passed
 - ✓ Data loaded to warehouse
+
+**How Warehouse Execution Works:**
+
+The notebooks use Spark SQL with three-part naming to create and populate tables directly in your Fabric Warehouse:
+
+1. **Table Creation**: `CREATE TABLE {warehouse_name}.dbo.Dim_Date (...)`
+   - Creates the table in the specified warehouse's `dbo` schema
+   - Uses standard SQL DDL syntax
+
+2. **Data Loading**: `saveAsTable(f"{warehouse_name}.dbo.Dim_Date")`
+   - Writes DataFrame data directly to the warehouse table
+   - Uses Delta format for efficient storage and updates
+   - Overwrites existing data on each run
+
+3. **Verification**: `SELECT COUNT(*) FROM {warehouse_name}.dbo.Dim_Date`
+   - Queries the warehouse table to verify data loaded successfully
+
+**Note:** The notebooks run in the Lakehouse Spark environment but create tables in the Warehouse using cross-resource SQL commands.
 
 ### Step 5: Verify Deployment
 
@@ -367,6 +398,26 @@ ModuleNotFoundError: No module named 'calendar'
 - Check sample outputs in notebook quality check section
 - For fiscal year starting July 1: month=7, day=1
 
+**Issue**: Table not found in warehouse
+```
+Error: Table or view not found: YourWarehouse.dbo.Dim_Date
+```
+**Solution**:
+- Update `warehouse_name` in notebook configuration (Cell 2) to match your actual warehouse name
+- Verify warehouse exists in your Fabric workspace
+- Check you have write permissions to the warehouse
+- Ensure warehouse name doesn't contain special characters (use exact name from workspace)
+
+**Issue**: Cannot create table in warehouse
+```
+Error: CREATE TABLE failed
+```
+**Solution**:
+- Verify you have Contributor or Admin permissions on the warehouse
+- Check warehouse is not in read-only mode
+- Ensure warehouse has sufficient storage capacity
+- Try running the DDL cell separately to see specific error details
+
 ### Performance Optimization
 
 For large date ranges (20+ years):
@@ -452,11 +503,16 @@ calendar/
 
 **v1.0.0** (2025-12-09)
 - Initial release
-- Multi-division fiscal year support
-- UK Public Holidays (Bank Holidays)
-- Self-contained Fabric notebooks
+- Multi-division fiscal year support (6 configurable divisions)
+- UK Public Holidays (Bank Holidays) with Easter calculation
+- Self-contained Fabric notebooks (all DDL + logic embedded)
 - Dynamic workspace and lakehouse ID detection using notebookutils
-- Configurable via JSON
+  - Uses `currentWorkspaceId` and `defaultLakehouseId` from runtime context
+- Fabric Warehouse targeting with three-part naming
+  - Tables created in specified warehouse: `{warehouse_name}.dbo.TableName`
+  - Cross-resource SQL execution from Lakehouse notebooks to Warehouse
+- BOOLEAN datatype for compatibility with Fabric Warehouse
+- Configurable via JSON (divisions, fiscal years, date ranges, holidays)
 
 ---
 
