@@ -156,8 +156,8 @@ warehouse_name = "YourWarehouse"  # UPDATE THIS: Your Fabric Warehouse name
 - Workspace ID and Lakehouse ID are retrieved automatically using `notebookutils.runtime.context`
   - `currentWorkspaceId`: Your Fabric workspace GUID
   - `defaultLakehouseId`: The attached lakehouse GUID
-- Tables are created using three-part naming: `{warehouse_name}.dbo.TableName`
-- Example: `MyWarehouse.dbo.Dim_Date`
+- Tables are created by switching to the warehouse context using `USE` statement
+- Supports warehouse names with spaces or special characters (handled with backticks)
 
 **Additional Configuration:**
 
@@ -194,21 +194,33 @@ time_granularity = "minute"  # 'minute' or 'second'
 
 **How Warehouse Execution Works:**
 
-The notebooks use Spark SQL with three-part naming to create and populate tables directly in your Fabric Warehouse:
+The notebooks use Spark SQL with `USE` statements to switch database context and create tables in your Fabric Warehouse:
 
-1. **Table Creation**: `CREATE TABLE {warehouse_name}.dbo.Dim_Date (...)`
-   - Creates the table in the specified warehouse's `dbo` schema
+1. **Set Database Context**: `USE \`{warehouse_name}\``
+   - Switches the current database to your specified warehouse
+   - Backticks handle warehouse names with spaces or special characters
+   - All subsequent SQL commands execute in this warehouse context
+
+2. **Table Creation**: `CREATE TABLE Dim_Date (...)`
+   - Creates the table in the current warehouse
    - Uses standard SQL DDL syntax
+   - No need for schema prefix when using USE statement
 
-2. **Data Loading**: `saveAsTable(f"{warehouse_name}.dbo.Dim_Date")`
+3. **Data Loading**: `saveAsTable("Dim_Date")`
    - Writes DataFrame data directly to the warehouse table
    - Uses Delta format for efficient storage and updates
    - Overwrites existing data on each run
 
-3. **Verification**: `SELECT COUNT(*) FROM {warehouse_name}.dbo.Dim_Date`
+4. **Verification**: `SELECT COUNT(*) FROM Dim_Date`
    - Queries the warehouse table to verify data loaded successfully
 
-**Note:** The notebooks run in the Lakehouse Spark environment but create tables in the Warehouse using cross-resource SQL commands.
+**Why USE instead of three-part naming?**
+- Handles warehouse names with spaces (e.g., "Common Data")
+- Avoids schema parsing issues in Spark SQL
+- More reliable cross-resource execution
+- Cleaner SQL syntax in the notebook
+
+**Note:** The notebooks run in the Lakehouse Spark environment but create tables in the Warehouse using the USE statement to switch context.
 
 ### Step 5: Verify Deployment
 
@@ -508,8 +520,9 @@ calendar/
 - Self-contained Fabric notebooks (all DDL + logic embedded)
 - Dynamic workspace and lakehouse ID detection using notebookutils
   - Uses `currentWorkspaceId` and `defaultLakehouseId` from runtime context
-- Fabric Warehouse targeting with three-part naming
-  - Tables created in specified warehouse: `{warehouse_name}.dbo.TableName`
+- Fabric Warehouse targeting using USE statement
+  - Database context switching: `USE \`{warehouse_name}\``
+  - Supports warehouse names with spaces and special characters
   - Cross-resource SQL execution from Lakehouse notebooks to Warehouse
 - BOOLEAN datatype for compatibility with Fabric Warehouse
 - Configurable via JSON (divisions, fiscal years, date ranges, holidays)
