@@ -110,7 +110,7 @@
         }
       },
       {
-        "name": "Send_Failure_Notification",
+        "name": "Send_DimDate_Failure_Notification",
         "type": "WebActivity",
         "dependsOn": [
           {
@@ -118,7 +118,35 @@
             "dependencyConditions": [
               "Failed"
             ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:05:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "userProperties": [],
+        "typeProperties": {
+          "url": "https://your-notification-endpoint.com/webhook",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
           },
+          "body": {
+            "message": "Dim_Date refresh FAILED",
+            "pipeline": "@{pipeline().Pipeline}",
+            "runId": "@{pipeline().RunId}",
+            "timestamp": "@{utcnow()}",
+            "error": "@{activity('Generate_Dim_Date').error.message}"
+          }
+        }
+      },
+      {
+        "name": "Send_DimTime_Failure_Notification",
+        "type": "WebActivity",
+        "dependsOn": [
           {
             "activity": "Generate_Dim_Time",
             "dependencyConditions": [
@@ -141,11 +169,11 @@
             "Content-Type": "application/json"
           },
           "body": {
-            "message": "Dimension tables refresh FAILED",
+            "message": "Dim_Time refresh FAILED",
             "pipeline": "@{pipeline().Pipeline}",
             "runId": "@{pipeline().RunId}",
             "timestamp": "@{utcnow()}",
-            "error": "@{activity('Generate_Dim_Date').error.message}"
+            "error": "@{activity('Generate_Dim_Time').error.message}"
           }
         }
       }
